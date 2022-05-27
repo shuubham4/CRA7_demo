@@ -30,3 +30,8 @@ https://www.techrepublic.com/article/how-to-connect-to-vnc-using-ssh/
 
 ## Catkin error (noetic with 20.04)
 https://answers.ros.org/question/353111/following-installation-instructions-catkin_make-generates-a-cmake-error/
+
+- Ros Noetic master can control melodic clients (checked).
+- Data from two robots can be seen on Rviz at the same time under Noetic master.
+- Turtlebot SLAM can't be run using the robot's ROS system right now. Will have to look into how to install gmapping inside of Turtlebot3.
+- Backup plan: Treat the remote pc of turtlebot as a client of Noetic Rosmaster and take the topic from there while running SLAM.
