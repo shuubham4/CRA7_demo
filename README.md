@@ -25,5 +25,5 @@ export ROS_IP=[client_ip_address]
 #export ROS_MASTER_URI=http://master:11311
 #export ROS_IPV6=on
 ```
-# VNC Via SSH resources
+## VNC Via SSH resources
 https://www.techrepublic.com/article/how-to-connect-to-vnc-using-ssh/
