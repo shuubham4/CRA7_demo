@@ -27,3 +27,6 @@ export ROS_IP=[client_ip_address]
 ```
 ## VNC Via SSH resources
 https://www.techrepublic.com/article/how-to-connect-to-vnc-using-ssh/
+
+## Catkin error (noetic with 20.04)
+[](https://answers.ros.org/question/353111/following-installation-instructions-catkin_make-generates-a-cmake-error/)
