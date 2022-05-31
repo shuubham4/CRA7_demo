@@ -36,7 +36,8 @@ https://answers.ros.org/question/353111/following-installation-instructions-catk
 - Turtlebot SLAM can't be run using the robot's ROS system right now. Will have to look into how to install gmapping inside of Turtlebot3.
 - Backup plan: Treat the remote pc of turtlebot as a client of Noetic Rosmaster and take the topic from there while running SLAM.
 - 
-##Raspi camera error:
+## Raspi camera error:
+
 after setting up all things when we run "raspistill -o test.jpg"
 it shows that erros:
 mmal: mmal_vc_component_enable: failed to enable component: ENOSPC
@@ -44,7 +45,8 @@ mmal: camera component couldn't be enabled
 mmal: main: Failed to create camera component
 mmal: Failed to run camera app. Please check for firmware updates
 Now we tried lots of solution but failed.
-#Use Webcam instead of raspi camera 
+
+## Use Webcam instead of raspi camera 
 We follow this instruction: https://www.youtube.com/watch?v=_uVaZalaSbI 
 
 When we tried to capture image using command : fswebcam -r 1280x720 test.jpg
@@ -54,7 +56,8 @@ No input was specified, using the first. Error starting stream.
 VIDIOC_STREAMON: Invalid argument Unable to use mmap. 
 Using read instead. --- Capturing frame...
 VIDIOC_DQBUF: Invalid argument Segmentation fault
-Solution: 
+## Solution: 
+
 we solved this issue by increasing GPU memory from 128 to 144.
 Go to Preference>Raspberrypi configuaration > Performance > Gpu memory=144.
 
