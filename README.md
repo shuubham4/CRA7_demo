@@ -62,3 +62,4 @@ we solved this issue by increasing GPU memory from 128 to 144.
 Go to Preference>Raspberrypi configuaration > Performance > Gpu memory=144.
 ## Raspberry pi webcam server 
 https://pimylifeup.com/raspberry-pi-webcam-server/
+(done)
