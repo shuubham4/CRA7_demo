@@ -31,3 +31,7 @@ https://www.techrepublic.com/article/how-to-connect-to-vnc-using-ssh/
 ## Raspberry pi webcam server 
 https://pimylifeup.com/raspberry-pi-webcam-server/
 (done)
+
+## Hector slam on RosBot2
+https://automaticaddison.com/how-to-build-an-indoor-map-using-ros-and-lidar-based-slam/ (done)
+see the source folder below to find out details and Read.md file
