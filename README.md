@@ -28,30 +28,6 @@ export ROS_IP=[client_ip_address]
 ## VNC Via SSH resources
 https://www.techrepublic.com/article/how-to-connect-to-vnc-using-ssh/
 
-## Raspi camera error:
-
-after setting up all things when we run "raspistill -o test.jpg"
-it shows that erros:
-mmal: mmal_vc_component_enable: failed to enable component: ENOSPC
-mmal: camera component couldn't be enabled
-mmal: main: Failed to create camera component
-mmal: Failed to run camera app. Please check for firmware updates
-Now we tried lots of solution but failed.
-
-## Use Webcam instead of raspi camera 
-We follow this instruction: https://www.youtube.com/watch?v=_uVaZalaSbI 
-
-When we tried to capture image using command : fswebcam -r 1280x720 test.jpg
-it showed this error: 
---- Opening /dev/video0... Trying source module v4l2... /dev/video0 opened. 
-No input was specified, using the first. Error starting stream. 
-VIDIOC_STREAMON: Invalid argument Unable to use mmap. 
-Using read instead. --- Capturing frame...
-VIDIOC_DQBUF: Invalid argument Segmentation fault
-## Solution: 
-
-we solved this issue by increasing GPU memory from 128 to 144.
-Go to Preference>Raspberrypi configuaration > Performance > Gpu memory=144.
 ## Raspberry pi webcam server 
 https://pimylifeup.com/raspberry-pi-webcam-server/
 (done)
