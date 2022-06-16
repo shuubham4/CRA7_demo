@@ -35,3 +35,8 @@ https://pimylifeup.com/raspberry-pi-webcam-server/
 ## Hector slam on RosBot2
 https://automaticaddison.com/how-to-build-an-indoor-map-using-ros-and-lidar-based-slam/ (done)
 see the source folder below to find out details and Read.md file
+
+## Saving map using rosrun
+```
+rosrun map_server map_saver -f ~/map
+```
