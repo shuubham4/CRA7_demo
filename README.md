@@ -40,3 +40,5 @@ see the source folder below to find out details and Read.md file
 ```
 rosrun map_server map_saver -f ~/map
 ```
+## Task
+Create rule for 11311 port and enbale firewall.
