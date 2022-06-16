@@ -1,5 +1,5 @@
 ## Navigation using turtlebot3
-- Run 'roscore. in the master pc.
+- Run 'roscore' in the master pc.
 - Issue the following command to enable bringup
 - 
 ```
