@@ -12,3 +12,11 @@ Run directly the following code:
 - You can query for data from different towers using the following command:
   - SELECT value FROM <measurement_name> where source_id = 'tower_0'
   - Change the  <measurement_name> with any of the following:
+    - ambient_light
+    - external_temp
+    - humidity
+    - internal_temperature
+    - location
+    - movement_detection
+    - Power_consumption
+
