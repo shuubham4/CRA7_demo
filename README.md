@@ -42,3 +42,13 @@ rosrun map_server map_saver -f ~/map
 ```
 ## Task
 Create rule for 11311 port and enbale firewall.
+
+## Run the final code
+1. First create the map Using
+```
+roslaunch dvpg map_creation.launch
+```
+2. Follow the map using following code
+```
+roslaunch dvpg map_follower.launch
+```
