@@ -44,11 +44,14 @@ rosrun map_server map_saver -f ~/map
 Create rule for 11311 port and enbale firewall.
 
 ## Run the final code
-1. First create the map Using
+1. Copy all the codes from `src_pc` to `catkin_ws\src\`
+2. Similarly copy all the codes to respective bots
+3. Build the packages using `catkin_make`
+4. First create the map Using
 ```
 roslaunch dvpg map_creation.launch
 ```
-2. Follow the map using following code
+5. Follow the map using following code
 ```
 roslaunch dvpg map_follower.launch
 ```
