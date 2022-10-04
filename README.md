@@ -41,7 +41,7 @@ see the source folder below to find out details and Read.md file
 rosrun map_server map_saver -f ~/map
 ```
 ## Task
-Create rule for 11311 port and enbale firewall.
+Create rule for 11311 port and enable firewall.
 
 ## Run the final code
 1. Copy all the codes from `src_pc` to `catkin_ws\src\`
