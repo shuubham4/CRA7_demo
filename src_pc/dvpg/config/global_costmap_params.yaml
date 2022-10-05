@@ -7,7 +7,7 @@ global_costmap:
   origin_x: -7.5
   origin_y: -7.5
   rolling_window: true
-  inflation_radius: 2.5
+  inflation_radius: 2.5 #2.5s,1
   resolution: 0.1
   plugins:
    - {name: static_layer,        type: "costmap_2d::StaticLayer"}
