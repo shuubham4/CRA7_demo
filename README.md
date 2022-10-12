@@ -2,7 +2,7 @@
 This is Demo project for CRA7_demo
 
 ## Connect multiple device 
-Both client and server is setup with Ubuntu 18 and ROS
+Both client and server is setup with Ubuntu 20.04 and ROS noetic
 
 1. First connect all the device under same wifi network
 2. On the server pc open the `.bashrc` file
