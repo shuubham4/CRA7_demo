@@ -1,0 +1,33 @@
+<launch>
+
+  <arg name="rosbot_pro" default="true" />
+  <arg name="use_gazebo" default="false" />
+  <arg name="robot_no" default="rosbot2"/>
+
+
+
+  <node unless="$(arg use_gazebo)" pkg="tf" type="static_transform_publisher" name="laser_broadcaster" args="0 0 0 3.14 0 0 base_link laser 100" />
+  
+
+  <node pkg="move_base" type="move_base" name="move_base" output="screen">
+    <remap from="cmd_vel" to="$(arg robot_no)/cmd_vel"/>
+    <param name="controller_frequency" value="10.0"/>
+    <rosparam file="$(find dvpg)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find dvpg)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find dvpg)/config/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find dvpg)/config/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find dvpg)/config/trajectory_planner.yaml" command="load" />
+  </node>
+
+  <node pkg="explore_lite" type="explore" respawn="true" name="explore" output="screen">
+    <rosparam file="$(find dvpg)/config/exploration.yaml" command="load" />
+  </node>
+
+  <include file="$(find dvpg)/launch/map_server.launch"/>
+
+  <include file="$(find dvpg)/launch/amcl_only.launch">
+    <arg name="robot_no" value="rosbot2"/>
+  </include>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find dvpg)/config/view_map_follower.rviz"/>
+</launch>

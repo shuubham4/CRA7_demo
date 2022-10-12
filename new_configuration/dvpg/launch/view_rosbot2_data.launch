@@ -1,0 +1,4 @@
+<launch>
+
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find dvpg)/config/view_rosbot2_data.rviz"/>
+</launch>
