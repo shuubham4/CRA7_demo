@@ -36,6 +36,7 @@
 
   <!-- Translate Sentence messages from the MCU to NavSatFix messages -->
   <node pkg="nmea_navsat_driver" type="nmea_topic_driver" name="nmea_topic_driver" ns="navsat" />
+  <include file="$(find nmea_navsat_driver)/launch/nmea_serial_driver.launch" ns="gps"/>
 
   <node pkg="wit_ros_imu" type="wit_normal_ros.py" name="imu" output="screen"/>
 
@@ -49,8 +50,46 @@
     </rosparam>
   </node>
 
-  <!-- Differential controller and basic localization -->
-  <include file="$(find jackal_control)/launch/control.launch" />
+  <rosparam command="load" file="$(find jackal_control)/config/control.yaml" />
+  <rosparam command="load" file="$(find dvpg_jackal)/params/navsat_params.yaml" />
+
+  <node name="controller_spawner" pkg="controller_manager" type="spawner"
+        args="jackal_joint_publisher jackal_velocity_controller" />
+
+  <group if="$(arg enable_ekf)" >
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization">
+      <rosparam command="load" file="$(find dvpg_jackal)/params/ekf_params.yaml" />
+    </node>
+
+    <node pkg="robot_localization" type="navsat_transform_node" name="navsat_transform" clear_params="true" output="screen">
+      <remap from="gps/fix" to="/gps/fix"/>
+      <remap from="imu/data" to="/wit/imu"/>
+    </node>
+
+    <group if="$(optenv JACKAL_IMU_MICROSTRAIN 0)">
+      <!-- Optionally load the configuration for the Microstrain-family IMU -->
+      <rosparam>
+        ekf_localization:
+          imu1: microstrain/imu/data
+          imu1_config: [false, false, false,
+                      true, true, true,
+                      false, false, false,
+                      true, true, true,
+                      false, false, false]
+          imu1_differential: false
+      </rosparam>
+      <param name="ekf_localization/imu1" value="$(optenv JACKAL_IMU_MICROSTRAIN_NAME microstrain)/imu/data"/>
+    </group>
+  </group>
+
+  <node pkg="twist_mux" type="twist_mux" name="twist_mux">
+    <rosparam command="load" file="$(find jackal_control)/config/twist_mux.yaml" />
+    <remap from="cmd_vel_out" to="jackal_velocity_controller/cmd_vel"/>
+  </node>
+
+  <group if="$(optenv JACKAL_CONTROL_EXTRAS 0)" >
+    <rosparam command="load" file="$(env JACKAL_CONTROL_EXTRAS_PATH)" subst_value="true" />
+  </group>
 
   <!-- Teleoperation via joystick and rviz interactive markers -->
   <include file="$(find jackal_control)/launch/teleop.launch" />
@@ -90,5 +129,5 @@
 
   </node>
 
-  <!--include file="$(find jackal_navigation)/launch/odom_navigation_demo.launch"/-->
+  <include file="$(find jackal_navigation)/launch/odom_navigation_demo.launch"/>
 </launch>
