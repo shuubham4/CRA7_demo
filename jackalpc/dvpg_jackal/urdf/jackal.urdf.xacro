@@ -245,6 +245,22 @@
     <origin xyz="-0.180 0.126 0.1815" />
   </joint>
 
+  <!-- Ex gps Link -->
+  <link name="gps">
+    <visual>
+      <geometry>
+        <cylinder radius="0.026" length="0.016" />
+      </geometry>
+      <origin xyz="0 0 0.008" />
+      <material name="black" />
+    </visual>
+  </link>
+  <joint name="gps_joint" type="fixed">
+    <parent link="chassis_link" />
+    <child link="gps" />
+    <origin xyz="-0.180 -0.126 0.1815" />
+  </joint>
+
   <link name="mid_mount"></link>
   <joint name="mid_mount_joint" type="fixed">
     <parent link="chassis_link" />
