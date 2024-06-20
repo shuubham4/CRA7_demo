@@ -96,7 +96,8 @@
         let isRecording = false;
 
         function setupWebSocket() {
-            socket = new WebSocket("ws://" + window.location.host + "/rosboard/v1");
+            socket = new WebSocket("wss://" + window.location.host + "/rosboard/v1");
+            socket.binaryType = 'arraybuffer';
 
             socket.onopen = function() {
                 console.log("WebSocket connection established");
@@ -129,20 +130,36 @@
             }
         });
 
+        async function requestMicrophoneAccess() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log('Microphone access granted.');
+                stream.getTracks().forEach(track => track.stop());
+            } catch (err) {
+                console.error('Microphone access denied: ', err);
+                alert('Microphone access is required to use this feature. Please allow microphone access.');
+            }
+        }
+
         async function startRecording() {
             if (isRecording) return;  // Prevent starting multiple recordings
 
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            try {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const input = audioContext.createMediaStreamSource(stream);
+                recorder = new Recorder(input, { numChannels: 1 });
+
+                recorder.record();
+                isRecording = true;
+                console.log("Recording started");
+            } catch (err) {
+                console.error('Error starting recording: ', err);
+                alert('Could not start recording. Please check microphone permissions.');
             }
-
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const input = audioContext.createMediaStreamSource(stream);
-            recorder = new Recorder(input, { numChannels: 1 });
-
-            recorder.record();
-            isRecording = true;
-            console.log("Recording started");
         }
 
         function stopRecording() {
@@ -170,6 +187,7 @@
 
         window.onload = function() {
             setupWebSocket();
+            requestMicrophoneAccess();
         };
     </script>
 
