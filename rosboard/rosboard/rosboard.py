@@ -9,6 +9,7 @@ import time
 import string
 import tornado, tornado.web, tornado.websocket
 import traceback
+import ssl
 import torch
 import torchaudio
 import soundfile as sf
@@ -109,11 +110,17 @@ class ROSBoardNode(object):
                 }),
         ]
 
+        certfile_path = os.path.join(pathlib.Path(__file__).resolve().parents[1], "cert.pem")
+        keyfile_path = os.path.join(pathlib.Path(__file__).resolve().parents[1], "key.pem")
+
+        ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        ssl_ctx.load_cert_chain(certfile=certfile_path, keyfile=keyfile_path)
+
         self.event_loop = None
         self.tornado_application = tornado.web.Application(tornado_handlers, **tornado_settings)
         asyncio.set_event_loop(asyncio.new_event_loop())
         self.event_loop = tornado.ioloop.IOLoop()
-        self.tornado_application.listen(self.port)
+        self.tornado_application.listen(self.port, ssl_options=ssl_ctx)
 
         # allows tornado to log errors to ROS
         self.logwarn = rospy.logwarn
