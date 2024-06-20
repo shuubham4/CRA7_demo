@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<launch>
+  <include file="$(find outdoor_waypoint_nav)/launch/include/localization_run.launch"/>
+
+  <node name="gps_collection" pkg="dvpg" type="joy_launch_control.py"/>
+
+  <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
+
+    <remap from="cloud_in" to="/velodyne_points"/>
+    <remap from="scan" to="/front/scan"/>
+    <rosparam>
+        transform_tolerance: 0.01
+        min_height: 0.0
+        max_height: 1.25
+
+        angle_min: -3.1415
+        angle_max: 3.1415
+        angle_increment: 0.01
+        scan_time: 0.1
+        range_min: 0.1
+        range_max: 130
+        use_inf: true
+        concurrency_level: 0
+    </rosparam>
+
+  </node>
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find dvpg)/params/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find dvpg)/params/costmap_common_params.yaml" command="load" ns="local_costmap" />
+
+    <rosparam file="$(find dvpg)/params/odom_nav_params/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find dvpg)/params/odom_nav_params/local_costmap_params.yaml" command="load" />
+
+    <rosparam file="$(find dvpg)/params/base_local_planner_params.yaml" command="load" />
+    <rosparam file="$(find dvpg)/params/move_base_params.yaml" command="load" />
+
+    <param name="base_global_planner" type="string" value="navfn/NavfnROS" />
+    <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/>
+
+    <remap from="odom" to="odometry/filtered" />
+  </node>
+
+  <node name="web_input" pkg="rosboard" type="rosboard_node" output="screen"/>
+  <node name="web_listener" pkg="dvpg" type="goal_listener.py" output="screen"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find dvpg)/rviz/map.rviz"/>
+</launch>

@@ -1,0 +1,9 @@
+pillow==2.2.2
+PyAutoGUI
+Keyboard
+tqdm
+torch
+torchvision
+torchaudio
+easydict
+gdown
