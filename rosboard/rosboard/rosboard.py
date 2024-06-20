@@ -3,11 +3,19 @@
 import asyncio
 import importlib
 import os
+import pathlib
 import threading
 import time
+import string
 import tornado, tornado.web, tornado.websocket
 import traceback
+import torch
+import torchaudio
+import soundfile as sf
+import numpy as np
+from scipy.signal import resample
 from std_msgs.msg import String
+from transformers import WhisperTokenizer, WhisperProcessor, WhisperForConditionalGeneration, WhisperFeatureExtractor
 
 if os.environ.get("ROS_VERSION") == "1":
     import rospy # ROS1
@@ -25,6 +33,19 @@ from rosboard.subscribers.processes_subscriber import ProcessesSubscriber
 from rosboard.subscribers.system_stats_subscriber import SystemStatsSubscriber
 from rosboard.subscribers.dummy_subscriber import DummySubscriber
 from rosboard.handlers import ROSBoardSocketHandler, NoCacheStaticFileHandler
+
+import warnings
+import logging
+
+# Suppress all Python warnings
+warnings.filterwarnings("ignore")
+
+# Suppress TensorFlow logs
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+
+# Suppress specific logging messages
+logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
 class ROSBoardNode(object):
     instance = None
@@ -53,6 +74,19 @@ class ROSBoardNode(object):
         # dict of topic_name -> float (time in seconds)
         self.last_data_times_by_topic = {}
         self.user_input = ""
+        self.audio_input = False
+
+        self.tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-medium", language="English", task="transcribe")
+        self.processor = WhisperProcessor.from_pretrained("openai/whisper-medium", language="English", task="transcribe", sampling_rate = 16000)
+        self.feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-medium", device="cuda")
+        #model = WhisperForConditionalGeneration.from_pretrained("/home/shuubham/Desktop/spine1_train/whisper_train/whisper_arl_medium/checkpoint-2500", return_dict=False)
+
+        self.model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-medium", return_dict=False)
+        self.model.config.forced_decoder_ids = None 
+        self.model.config.forced_decoder_ids = self.processor.get_decoder_prompt_ids(language="English", task = "transcribe")
+        self.model.config.suppress_tokens = []
+        self.model.config.use_cache = False
+        self.model.config.condition_on_previous_text = False
 
         if rospy.__name__ == "rospy2":
             # ros2 hack: need to subscribe to at least 1 topic
@@ -96,12 +130,40 @@ class ROSBoardNode(object):
 
         threading.Thread(target = self.pub_loop, daemon = True).start()
 
+        threading.Thread(target = self.audio_loop, daemon = True).start()
+
         self.lock = threading.Lock()
 
         rospy.loginfo("ROSboard listening on :%d" % self.port)
 
     def start(self):
         rospy.spin()
+
+    def audio_loop(self):
+        # time.sleep(5)
+        # self.input_pub.publish('Program started')
+        while True:
+            time.sleep(1)
+            if self.audio_input:
+                # time.sleep(1)
+                path = os.path.join(pathlib.Path(__file__).resolve().parents[1], "audiooutput.wav")
+                transcription = self.process_audio(path)
+                self.input_pub.publish(transcription)
+                self.audio_input = False
+
+    def process_audio(self, path):
+        audio, sample_rate = sf.read(path)
+        audio = np.array(audio)
+
+        num_samples = int(len(audio) * 16000 / sample_rate)
+        resampled_audio = resample(audio, num_samples)
+        input_features = self.feature_extractor(resampled_audio, sampling_rate=16000, return_tensors="pt").input_features
+        generated_ids = self.model.generate(inputs=input_features,no_repeat_ngram_size=4, language="English")
+        transcription = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        transcription = transcription.translate(str.maketrans('', '', string.punctuation))
+        transcription = transcription.lower()
+
+        return transcription[1:]
 
     def pub_loop(self):
         # time.sleep(5)
@@ -115,6 +177,9 @@ class ROSBoardNode(object):
 
     def handle_user_input(self, input_data):
         self.user_input = input_data
+
+    def handle_audio_input(self, input_data):
+        self.audio_input = input_data
 
     def get_msg_class(self, msg_type):
         """
