@@ -20,17 +20,32 @@
     <script type="text/javascript" src="js/gl-matrix.js"></script>
     <script type="text/javascript" src="js/litegl.min.js"></script>
     <script type="text/javascript" src="js/index.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recorderjs/0.1.0/recorder.js"></script>
 
     <title>ROSboard</title>
     <style>
         .input-container {
             display: flex;
+            align-items: center;
             justify-content: center;
             margin-top: 20px;
         }
         .mdl-textfield {
             width: 100%;
             max-width: 500px;
+        }
+        .mdl-button--microphone {
+            margin-left: 10px;
+            cursor: pointer;
+            background-color: #3f51b5;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
@@ -60,6 +75,9 @@
                         <input class="mdl-textfield__input" type="text" id="userInput" placeholder="Give a command here"/>
                         <label class="mdl-textfield__label" for="userInput">Command Line</label>
                     </div>
+                    <button class="mdl-button--microphone" id="micButton">
+                        <i class="material-icons">mic</i>
+                    </button>
                 </div>
                 <div class="grid"></div>
             </div>
@@ -73,6 +91,9 @@
 
     <script>
         let socket;
+        let audioContext;
+        let recorder;
+        let isRecording = false;
 
         function setupWebSocket() {
             socket = new WebSocket("ws://" + window.location.host + "/rosboard/v1");
@@ -107,6 +128,45 @@
                 sendInput();
             }
         });
+
+        async function startRecording() {
+            if (isRecording) return;  // Prevent starting multiple recordings
+
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const input = audioContext.createMediaStreamSource(stream);
+            recorder = new Recorder(input, { numChannels: 1 });
+
+            recorder.record();
+            isRecording = true;
+            console.log("Recording started");
+        }
+
+        function stopRecording() {
+            if (!isRecording) return;  // Prevent stopping if not recording
+
+            recorder.stop();
+            isRecording = false;
+            console.log("Recording stopped");
+
+            recorder.exportWAV(blob => {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const audioData = event.target.result;
+                    if (socket && socket.readyState === WebSocket.OPEN) {
+                        socket.send(audioData);
+                    }
+                };
+                reader.readAsArrayBuffer(blob);
+            });
+        }
+
+        document.getElementById("micButton").addEventListener("mousedown", startRecording);
+        document.getElementById("micButton").addEventListener("mouseup", stopRecording);
+        document.getElementById("micButton").addEventListener("mouseleave", stopRecording);
 
         window.onload = function() {
             setupWebSocket();
