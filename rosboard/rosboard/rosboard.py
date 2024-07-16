@@ -11,12 +11,14 @@ import tornado, tornado.web, tornado.websocket
 import traceback
 import ssl
 import torch
+from torchaudio import load, save
 import torchaudio
 import soundfile as sf
 import numpy as np
 from scipy.signal import resample
 from std_msgs.msg import String
 from transformers import WhisperTokenizer, WhisperProcessor, WhisperForConditionalGeneration, WhisperFeatureExtractor
+
 
 if os.environ.get("ROS_VERSION") == "1":
     import rospy # ROS1
@@ -76,6 +78,7 @@ class ROSBoardNode(object):
         self.last_data_times_by_topic = {}
         self.user_input = ""
         self.audio_input = False
+
 
         self.tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-medium", language="English", task="transcribe")
         self.processor = WhisperProcessor.from_pretrained("openai/whisper-medium", language="English", task="transcribe", sampling_rate = 16000)
@@ -159,11 +162,11 @@ class ROSBoardNode(object):
                 self.audio_input = False
 
     def process_audio(self, path):
-        audio, sample_rate = sf.read(path)
-        audio = np.array(audio)
+        audio, sample_rate = torchaudio.load(path)
+        resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
+        audio = resampler(audio)
 
-        num_samples = int(len(audio) * 16000 / sample_rate)
-        resampled_audio = resample(audio, num_samples)
+        resampled_audio = np.array(audio)
         input_features = self.feature_extractor(resampled_audio, sampling_rate=16000, return_tensors="pt").input_features
         generated_ids = self.model.generate(inputs=input_features,no_repeat_ngram_size=4, language="English")
         transcription = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
