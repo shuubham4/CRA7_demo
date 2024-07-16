@@ -164,6 +164,7 @@ catkin_install_python(PROGRAMS
  scripts/goal_listener.py
  scripts/joy_launch_control.py
  scripts/lidar_map.py
+ scripts/send_goal.py
  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
