@@ -187,6 +187,7 @@ class ROSBoardNode(object):
         audio, sample_rate = torchaudio.load(path)
         resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
         audio = resampler(audio)
+        # replace audio with enhanced audio here.
         resampled_audio = np.array(audio)
         input_features = self.feature_extractor(resampled_audio, sampling_rate=16000, return_tensors="pt").input_features
         generated_ids = self.model.generate(inputs=input_features,no_repeat_ngram_size=4, language="English")
