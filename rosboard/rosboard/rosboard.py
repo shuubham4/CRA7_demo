@@ -78,20 +78,18 @@ class ROSBoardNode(object):
         self.last_data_times_by_topic = {}
         self.user_input = ""
         self.audio_input = False
-
-        # Speech enhancement via diffusion: 
         
-        #self.tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-medium", language="English", task="transcribe")
-        #self.processor = WhisperProcessor.from_pretrained("openai/whisper-medium", language="English", task="transcribe", sampling_rate = 16000)
-        #self.feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-medium", device="cuda")
+        self.tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-medium", language="English", task="transcribe")
+        self.processor = WhisperProcessor.from_pretrained("openai/whisper-medium", language="English", task="transcribe", sampling_rate = 16000)
+        self.feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-medium", device="cuda")
         #model = WhisperForConditionalGeneration.from_pretrained("/home/shuubham/Desktop/spine1_train/whisper_train/whisper_arl_medium/checkpoint-2500", return_dict=False)
 
-        #self.model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-medium", return_dict=False)
-        #self.model.config.forced_decoder_ids = None 
-        #self.model.config.forced_decoder_ids = self.processor.get_decoder_prompt_ids(language="English", task = "transcribe")
-        #self.model.config.suppress_tokens = []
-        #self.model.config.use_cache = False
-        #self.model.config.condition_on_previous_text = False
+        self.model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-medium", return_dict=False)
+        self.model.config.forced_decoder_ids = None 
+        self.model.config.forced_decoder_ids = self.processor.get_decoder_prompt_ids(language="English", task = "transcribe")
+        self.model.config.suppress_tokens = []
+        self.model.config.use_cache = False
+        self.model.config.condition_on_previous_text = False
 
         if rospy.__name__ == "rospy2":
             # ros2 hack: need to subscribe to at least 1 topic
@@ -169,12 +167,11 @@ class ROSBoardNode(object):
 
         resampled_audio = np.array(audio)
 
-        # Process audio code corresponding to diffusion model 
-        #input_features = self.feature_extractor(resampled_audio, sampling_rate=16000, return_tensors="pt").input_features
-        #generated_ids = self.model.generate(inputs=input_features,no_repeat_ngram_size=4, language="English")
-        #transcription = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
-        #transcription = transcription.translate(str.maketrans('', '', string.punctuation))
-        #transcription = transcription.lower()
+        input_features = self.feature_extractor(resampled_audio, sampling_rate=16000, return_tensors="pt").input_features
+        generated_ids = self.model.generate(inputs=input_features,no_repeat_ngram_size=4, language="English")
+        transcription = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        transcription = transcription.translate(str.maketrans('', '', string.punctuation))
+        transcription = transcription.lower()
 
         return transcription[1:]
 
