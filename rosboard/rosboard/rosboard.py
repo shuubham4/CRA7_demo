@@ -328,13 +328,34 @@ class ROSBoardNode(object):
             spec_feat = spec_feat.to(device)
         return spec, erb_feat, spec_feat
 
-    
-    
-    def enhance(self,path):
-        audio, sample_rate = torchaudio.load(path)
-        resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
-        audio = resampler(audio)
-        
+
+    @torch.no_grad()
+    def enhance(
+        model: nn.Module, df_state: DF, audio: Tensor, pad=True, atten_lim_db: Optional[float] = None
+    ):
+        model.eval()
+        bs = audio.shape[0]
+        if hasattr(model, "reset_h0"):
+            model.reset_h0(batch_size=bs, device=get_device())
+        orig_len = audio.shape[-1]
+        n_fft, hop = 0, 0
+        if pad:
+            n_fft, hop = df_state.fft_size(), df_state.hop_size()
+            # Pad audio to compensate for the delay due to the real-time STFT implementation
+            audio = F.pad(audio, (0, n_fft))
+        nb_df = getattr(model, "nb_df", getattr(model, "df_bins", ModelParams().nb_df))
+        spec, erb_feat, spec_feat = df_features(audio, df_state, nb_df, device=get_device())
+        enhanced = model(spec.clone(), erb_feat, spec_feat)[0].cpu()
+        enhanced = as_complex(enhanced.squeeze(1))
+        if atten_lim_db is not None and abs(atten_lim_db) > 0:
+            lim = 10 ** (-abs(atten_lim_db) / 20)
+            enhanced = as_complex(spec.squeeze(1).cpu()) * lim + enhanced * (1 - lim)
+        audio = torch.as_tensor(df_state.synthesis(enhanced.numpy()))
+        if pad:
+            assert n_fft % hop == 0  # This is only tested for 50% and 75% overlap
+            d = n_fft - hop
+            audio = audio[:, d : orig_len + d]
+        return audio
 
     def pub_loop(self):
         # time.sleep(5)
