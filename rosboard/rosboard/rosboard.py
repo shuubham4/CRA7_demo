@@ -267,6 +267,21 @@ class ROSBoardNode(object):
         logger.info("Model loaded")
         return model, df_state, suffix, epoch
 
+    def df_features(audio: Tensor, df: DF, nb_df: int, device=None) -> Tuple[Tensor, Tensor, Tensor]:
+        spec = df.analysis(audio.numpy())  # [C, Tf] -> [C, Tf, F]
+        a = get_norm_alpha(False)
+        erb_fb = df.erb_widths()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            erb_feat = torch.as_tensor(erb_norm(erb(spec, erb_fb), a)).unsqueeze(1)
+        spec_feat = as_real(torch.as_tensor(unit_norm(spec[..., :nb_df], a)).unsqueeze(1))
+        spec = as_real(torch.as_tensor(spec).unsqueeze(1))
+        if device is not None:
+            spec = spec.to(device)
+            erb_feat = erb_feat.to(device)
+            spec_feat = spec_feat.to(device)
+        return spec, erb_feat, spec_feat
+
     
     
     def enhance(self,path):
