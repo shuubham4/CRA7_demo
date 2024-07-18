@@ -19,6 +19,26 @@ from scipy.signal import resample
 from std_msgs.msg import String
 from transformers import WhisperTokenizer, WhisperProcessor, WhisperForConditionalGeneration, WhisperFeatureExtractor
 
+import argparse
+import glob
+import warnings
+from typing import List, Optional, Tuple, Union
+from loguru import logger
+from torch import Tensor, nn
+from torch.nn import functional as F
+from torch.utils.data import DataLoader, Dataset
+from df.checkpoint import load_model as load_model_cp
+from df.config import config
+from df.io import load_audio, resample, save_audio
+from df.logger import init_logger
+from df.model import ModelParams
+from df.modules import get_device
+from df.utils import as_complex, as_real, download_file, get_cache_dir, get_norm_alpha
+from df.version import version
+from libdf import DF, erb, erb_norm, unit_norm
+PRETRAINED_MODELS = ("DeepFilterNet", "DeepFilterNet2", "DeepFilterNet3")
+DEFAULT_MODEL = "DeepFilterNet3"
+
 
 if os.environ.get("ROS_VERSION") == "1":
     import rospy # ROS1
@@ -174,6 +194,12 @@ class ROSBoardNode(object):
         transcription = transcription.lower()
 
         return transcription[1:]
+
+    def enhance(self,path):
+        audio, sample_rate = torchaudio.load(path)
+        resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
+        audio = resampler(audio)
+        
 
     def pub_loop(self):
         # time.sleep(5)
