@@ -111,6 +111,9 @@ class ROSBoardNode(object):
         self.model.config.use_cache = False
         self.model.config.condition_on_previous_text = False
 
+        # initialization for DeepFilterNet3
+
+
         if rospy.__name__ == "rospy2":
             # ros2 hack: need to subscribe to at least 1 topic
             # before dynamic subscribing will work later.
@@ -184,9 +187,7 @@ class ROSBoardNode(object):
         audio, sample_rate = torchaudio.load(path)
         resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
         audio = resampler(audio)
-
         resampled_audio = np.array(audio)
-
         input_features = self.feature_extractor(resampled_audio, sampling_rate=16000, return_tensors="pt").input_features
         generated_ids = self.model.generate(inputs=input_features,no_repeat_ngram_size=4, language="English")
         transcription = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
@@ -195,6 +196,79 @@ class ROSBoardNode(object):
 
         return transcription[1:]
 
+    # integrating code for DFNet 3
+    def init_df(
+        model_base_dir: Optional[str] = None,
+        post_filter: bool = False,
+        log_level: str = "INFO",
+        log_file: Optional[str] = "enhance.log",
+        config_allow_defaults: bool = True,
+        epoch: Union[str, int, None] = "best",
+        default_model: str = DEFAULT_MODEL,
+        mask_only: bool = False,
+    ) -> Tuple[nn.Module, DF, str, int]:
+
+        try:
+            from icecream import ic, install
+
+            ic.configureOutput(includeContext=True)
+            install()
+        except ImportError:
+            pass
+        use_default_model = model_base_dir is None or model_base_dir in PRETRAINED_MODELS
+        model_base_dir = get_model_basedir(model_base_dir or default_model)
+
+        if not os.path.isdir(model_base_dir):
+            raise NotADirectoryError("Base directory not found at {}".format(model_base_dir))
+        log_file = os.path.join(model_base_dir, log_file) if log_file is not None else None
+        init_logger(file=log_file, level=log_level, model=model_base_dir)
+        if use_default_model:
+            logger.info(f"Using {default_model} model at {model_base_dir}")
+        config.load(
+            os.path.join(model_base_dir, "config.ini"),
+            config_must_exist=True,
+            allow_defaults=config_allow_defaults,
+            allow_reload=True,
+        )
+        if post_filter:
+            config.set("mask_pf", True, bool, ModelParams().section)
+            try:
+                beta = config.get("pf_beta", float, ModelParams().section)
+                beta = f"(beta: {beta})"
+            except KeyError:
+                beta = ""
+            logger.info(f"Running with post-filter {beta}")
+        p = ModelParams()
+        df_state = DF(
+            sr=p.sr,
+            fft_size=p.fft_size,
+            hop_size=p.hop_size,
+            nb_bands=p.nb_erb,
+            min_nb_erb_freqs=p.min_nb_freqs,
+        )
+        checkpoint_dir = os.path.join(model_base_dir, "checkpoints")
+        load_cp = epoch is not None and not (isinstance(epoch, str) and epoch.lower() == "none")
+        if not load_cp:
+            checkpoint_dir = None
+        mask_only = mask_only or config(
+            "mask_only", cast=bool, section="train", default=False, save=False
+        )
+        model, epoch = load_model_cp(checkpoint_dir, df_state, epoch=epoch, mask_only=mask_only)
+        if (epoch is None or epoch == 0) and load_cp:
+            logger.error("Could not find a checkpoint")
+            exit(1)
+        logger.debug(f"Loaded checkpoint from epoch {epoch}")
+        model = model.to(get_device())
+        # Set suffix to model name
+        suffix = os.path.basename(os.path.abspath(model_base_dir))
+        if post_filter:
+            suffix += "_pf"
+        logger.info("Running on device {}".format(get_device()))
+        logger.info("Model loaded")
+        return model, df_state, suffix, epoch
+
+    
+    
     def enhance(self,path):
         audio, sample_rate = torchaudio.load(path)
         resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
