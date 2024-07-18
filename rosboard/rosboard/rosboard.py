@@ -197,6 +197,52 @@ class ROSBoardNode(object):
         return transcription[1:]
 
     # integrating code for DFNet 3
+
+    def main(args):
+        model, df_state, suffix, epoch = init_df(
+            args.model_base_dir,
+            post_filter=args.pf,
+            log_level=args.log_level,
+            config_allow_defaults=True,
+            epoch=args.epoch,
+            mask_only=args.no_df_stage,
+        )
+        suffix = suffix if args.suffix else None
+        if args.output_dir is None:
+            args.output_dir = "."
+        elif not os.path.isdir(args.output_dir):
+            os.mkdir(args.output_dir)
+        df_sr = ModelParams().sr
+        if args.noisy_dir is not None:
+            if len(args.noisy_audio_files) > 0:
+                logger.error("Only one of `noisy_audio_files` or `noisy_dir` arguments are supported.")
+                exit(1)
+            input_files = glob.glob(args.noisy_dir + "/*")
+        else:
+            assert len(args.noisy_audio_files) > 0, "No audio files provided"
+            input_files = args.noisy_audio_files
+        ds = AudioDataset(input_files, df_sr)
+        loader = DataLoader(ds, num_workers=2, pin_memory=True)
+        n_samples = len(ds)
+        for i, (file, audio, audio_sr) in enumerate(loader):
+            file = file[0]
+            audio = audio.squeeze(0)
+            progress = (i + 1) / n_samples * 100
+            t0 = time.time()
+            audio = enhance(
+                model, df_state, audio, pad=args.compensate_delay, atten_lim_db=args.atten_lim
+            )
+            t1 = time.time()
+            t_audio = audio.shape[-1] / df_sr
+            t = t1 - t0
+            rtf = t / t_audio
+            fn = os.path.basename(file)
+            p_str = f"{progress:2.0f}% | " if n_samples > 1 else ""
+            logger.info(f"{p_str}Enhanced noisy audio file '{fn}' in {t:.2f}s (RT factor: {rtf:.3f})")
+            audio = resample(audio.to("cpu"), df_sr, audio_sr)
+            save_audio(file, audio, sr=audio_sr, output_dir=args.output_dir, suffix=suffix, log=False)
+    
+    
     def init_df(
         model_base_dir: Optional[str] = None,
         post_filter: bool = False,
