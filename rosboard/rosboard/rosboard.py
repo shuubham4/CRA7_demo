@@ -90,23 +90,21 @@ logging.getLogger('tensorflow').setLevel(logging.ERROR)
 #        return len(self.files)
 
 
-def AudioDataset(self, ):
-    #def __init__(self, files: List[str], sr: int) -> None:
-    #    super().__init__()
-    self.files = []
-    for file in files:
-        if not os.path.isfile(file):
-            logger.warning(f"File not found: {file}. Skipping...")
-        self.files.append(file)
-    self.sr = sr
+    def AudioDataset(self, files: List[str], sr: int):
+        self.files = []
+        for file in files:
+            if not os.path.isfile(file):
+                logger.warning(f"File not found: {file}. Skipping...")
+            self.files.append(file)
+        self.sr = sr
 
-def __getitem__(self, index) -> Tuple[str, Tensor, int]:
-    fn = self.files[index]
-    audio, meta = load_audio(fn, self.sr, "cpu")
-    return fn, audio, meta.sample_rate
+    def __getitem__(self, index) -> Tuple[str, Tensor, int]:
+        fn = self.files[index]
+        audio, meta = load_audio(fn, self.sr, "cpu")
+        return fn, audio, meta.sample_rate
 
-def __len__(self):
-    return len(self.files)
+    def __len__(self):
+        return len(self.files)
 
 class ROSBoardNode(object):
     instance = None
@@ -236,7 +234,24 @@ class ROSBoardNode(object):
 
         return transcription[1:]
 
-    # integrating code for DFNet 3
+    # integrating code for DFNet 3 ############################################
+
+    def AudioDataset(self, files: List[str], sr: int):
+        self.files = []
+        for file in files:
+            if not os.path.isfile(file):
+                logger.warning(f"File not found: {file}. Skipping...")
+            self.files.append(file)
+        self.sr = sr
+
+    def __getitem__(self, index) -> Tuple[str, Tensor, int]:
+        fn = self.files[index]
+        audio, meta = load_audio(fn, self.sr, "cpu")
+        return fn, audio, meta.sample_rate
+
+    def __len__(self):
+        return len(self.files)    
+    
 
     def main_dfnet(args):
         model, df_state, suffix, epoch = init_df(
@@ -398,6 +413,8 @@ class ROSBoardNode(object):
             audio = audio[:, d : orig_len + d]
         return audio
 
+    ########################################################################
+    
     def pub_loop(self):
         # time.sleep(5)
         # self.input_pub.publish('Program started')
