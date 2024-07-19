@@ -263,7 +263,8 @@ class ROSBoardNode(object):
         except ImportError:
             pass
         use_default_model = model_base_dir is None or model_base_dir in PRETRAINED_MODELS
-        model_base_dir = get_model_basedir(model_base_dir or default_model)
+        #model_base_dir = get_model_basedir(model_base_dir or default_model)
+        model_base_dir = default_model
 
         if not os.path.isdir(model_base_dir):
             raise NotADirectoryError("Base directory not found at {}".format(model_base_dir))
