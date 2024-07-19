@@ -71,23 +71,42 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
 
-class AudioDataset(Dataset):
-    def __init__(self, files: List[str], sr: int) -> None:
-        super().__init__()
-        self.files = []
-        for file in files:
-            if not os.path.isfile(file):
-                logger.warning(f"File not found: {file}. Skipping...")
-            self.files.append(file)
-        self.sr = sr
+#class AudioDataset(Dataset):
+#    def __init__(self, files: List[str], sr: int) -> None:
+#        super().__init__()
+#        self.files = []
+#        for file in files:
+#            if not os.path.isfile(file):
+#                logger.warning(f"File not found: {file}. Skipping...")
+#            self.files.append(file)
+#        self.sr = sr
 
-    def __getitem__(self, index) -> Tuple[str, Tensor, int]:
-        fn = self.files[index]
-        audio, meta = load_audio(fn, self.sr, "cpu")
-        return fn, audio, meta.sample_rate
+#    def __getitem__(self, index) -> Tuple[str, Tensor, int]:
+#        fn = self.files[index]
+#        audio, meta = load_audio(fn, self.sr, "cpu")
+#        return fn, audio, meta.sample_rate
 
-    def __len__(self):
-        return len(self.files)
+#    def __len__(self):
+#        return len(self.files)
+
+
+def AudioDataset(self, ):
+    #def __init__(self, files: List[str], sr: int) -> None:
+    #    super().__init__()
+    self.files = []
+    for file in files:
+        if not os.path.isfile(file):
+            logger.warning(f"File not found: {file}. Skipping...")
+        self.files.append(file)
+    self.sr = sr
+
+def __getitem__(self, index) -> Tuple[str, Tensor, int]:
+    fn = self.files[index]
+    audio, meta = load_audio(fn, self.sr, "cpu")
+    return fn, audio, meta.sample_rate
+
+def __len__(self):
+    return len(self.files)
 
 class ROSBoardNode(object):
     instance = None
@@ -129,9 +148,10 @@ class ROSBoardNode(object):
         self.model.config.suppress_tokens = []
         self.model.config.use_cache = False
         self.model.config.condition_on_previous_text = False
+        
 
         # initialization for DeepFilterNet3
-
+        self.audiodataset = AudioDataset()
 
         if rospy.__name__ == "rospy2":
             # ros2 hack: need to subscribe to at least 1 topic
@@ -218,7 +238,7 @@ class ROSBoardNode(object):
 
     # integrating code for DFNet 3
 
-    def main(args):
+    def main_dfnet(args):
         model, df_state, suffix, epoch = init_df(
             args.model_base_dir,
             post_filter=args.pf,
