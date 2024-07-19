@@ -378,10 +378,96 @@ class ROSBoardNode(object):
             audio = audio[:, d : orig_len + d]
         return audio
 
+
+    def setup_df_argument_parser(
+        default_log_level: str = "INFO", parser=None
+    ) -> argparse.ArgumentParser:
+        if parser is None:
+            parser = argparse.ArgumentParser()
+        parser.add_argument(
+            "--model-base-dir",
+            "-m",
+            type=str,
+            default=None,
+            help="Model directory containing checkpoints and config. "
+            "To load a pretrained model, you may just provide the model name, e.g. `DeepFilterNet`. "
+            "By default, the pretrained DeepFilterNet2 model is loaded.",
+        )
+        parser.add_argument(
+            "--pf",
+            help="Post-filter that slightly over-attenuates very noisy sections.",
+            action="store_true",
+        )
+        parser.add_argument(
+            "--output-dir",
+            "-o",
+            type=str,
+            default=None,
+            help="Directory in which the enhanced audio files will be stored.",
+        )
+        parser.add_argument(
+            "--log-level",
+            type=str,
+            default=default_log_level,
+            help="Logger verbosity. Can be one of (debug, info, error, none)",
+        )
+        parser.add_argument("--debug", "-d", action="store_const", const="DEBUG", dest="log_level")
+        parser.add_argument(
+            "--epoch",
+            "-e",
+            default="best",
+            type=parse_epoch_type,
+            help="Epoch for checkpoint loading. Can be one of ['best', 'latest', <int>].",
+        )
+        parser.add_argument("-v", "--version", action=PrintVersion)
+        return parser
+
+
+    def run():
+        parser = setup_df_argument_parser()
+        parser.add_argument(
+            "--no-delay-compensation",
+            dest="compensate_delay",
+            action="store_false",
+            help="Dont't add some paddig to compensate the delay introduced by the real-time STFT/ISTFT implementation.",
+        )
+        parser.add_argument(
+            "--atten-lim",
+            "-a",
+            type=int,
+            default=None,
+            help="Attenuation limit in dB by mixing the enhanced signal with the noisy signal.",
+        )
+        parser.add_argument(
+            "noisy_audio_files",
+            type=str,
+            nargs="*",
+            help="List of noise files to mix with the clean speech file.",
+        )
+        parser.add_argument(
+            "--noisy-dir",
+            "-i",
+            type=str,
+            default=None,
+            help="Input directory containing noisy audio files. Use instead of `noisy_audio_files`.",
+        )
+        parser.add_argument(
+            "--no-suffix",
+            action="store_false",
+            dest="suffix",
+            help="Don't add the model suffix to the enhanced audio files",
+        )
+        parser.add_argument("--no-df-stage", action="store_true")
+        args = parser.parse_args()
+        main_dfnet(args)
+
+
+    
+
     ########################################################################
     
     def pub_loop(self):
-        # time.sleep(5)
+        # time.sleep(5)   
         # self.input_pub.publish('Program started')
         while True:
             time.sleep(1)
