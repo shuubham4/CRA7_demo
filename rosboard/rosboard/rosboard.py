@@ -70,6 +70,25 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 # Suppress specific logging messages
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
+
+class AudioDataset(Dataset):
+    def __init__(self, files: List[str], sr: int) -> None:
+        super().__init__()
+        self.files = []
+        for file in files:
+            if not os.path.isfile(file):
+                logger.warning(f"File not found: {file}. Skipping...")
+            self.files.append(file)
+        self.sr = sr
+
+    def __getitem__(self, index) -> Tuple[str, Tensor, int]:
+        fn = self.files[index]
+        audio, meta = load_audio(fn, self.sr, "cpu")
+        return fn, audio, meta.sample_rate
+
+    def __len__(self):
+        return len(self.files)
+
 class ROSBoardNode(object):
     instance = None
     def __init__(self, node_name = "rosboard_node"):
