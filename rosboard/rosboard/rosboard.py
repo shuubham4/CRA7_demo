@@ -112,10 +112,6 @@ class ROSBoardNode(object):
         self.model.config.use_cache = False
         self.model.config.condition_on_previous_text = False
         
-
-        # initialization for DeepFilterNet3
-        self.audiodataset = AudioDataset()
-
         if rospy.__name__ == "rospy2":
             # ros2 hack: need to subscribe to at least 1 topic
             # before dynamic subscribing will work later.
@@ -201,24 +197,43 @@ class ROSBoardNode(object):
 
     # integrating code for DFNet 3 ############################################
 
-    def AudioDataset(self, files: List[str], sr: int):
-        self.files = []
-        for file in files:
-            if not os.path.isfile(file):
-                logger.warning(f"File not found: {file}. Skipping...")
-            self.files.append(file)
-        self.sr = sr
+    #def AudioDataset(self, files: List[str], sr: int):
+    #    self.files = []
+    #    for file in files:
+    #        if not os.path.isfile(file):
+    #            logger.warning(f"File not found: {file}. Skipping...")
+    #        self.files.append(file)
+    #    self.sr = sr
 
-    def __getitem__(self, index) -> Tuple[str, Tensor, int]:
-        fn = self.files[index]
-        audio, meta = load_audio(fn, self.sr, "cpu")
-        return fn, audio, meta.sample_rate
+    #def __getitem__(self, index) -> Tuple[str, Tensor, int]:
+    #    fn = self.files[index]
+    #    audio, meta = load_audio(fn, self.sr, "cpu")
+    #    return fn, audio, meta.sample_rate
 
-    def __len__(self):
-        return len(self.files)    
+    #def __len__(self):
+    #    return len(self.files)    
     
 
     def main_dfnet(args):
+
+        class AudioDataset(Dataset):
+            def __init__(self, files: List[str], sr: int) -> None:
+                super().__init__()
+                self.files = []
+                for file in files:
+                    if not os.path.isfile(file):
+                        logger.warning(f"File not found: {file}. Skipping...")
+                    self.files.append(file)
+                self.sr = sr
+
+            def __getitem__(self, index) -> Tuple[str, Tensor, int]:
+                fn = self.files[index]
+                audio, meta = load_audio(fn, self.sr, "cpu")
+                return fn, audio, meta.sample_rate
+
+            def __len__(self):
+                return len(self.files)
+        
         model, df_state, suffix, epoch = init_df(
             args.model_base_dir,
             post_filter=args.pf,
@@ -241,7 +256,7 @@ class ROSBoardNode(object):
         else:
             assert len(args.noisy_audio_files) > 0, "No audio files provided"
             input_files = args.noisy_audio_files
-        ds = self.AudioDataset(input_files, df_sr)
+        ds = AudioDataset(input_files, df_sr)
         loader = DataLoader(ds, num_workers=2, pin_memory=True)
         n_samples = len(ds)
         for i, (file, audio, audio_sr) in enumerate(loader):
@@ -282,7 +297,6 @@ class ROSBoardNode(object):
         except ImportError:
             pass
         use_default_model = model_base_dir is None or model_base_dir in PRETRAINED_MODELS
-        #model_base_dir = get_model_basedir(model_base_dir or default_model)
         model_base_dir = default_model
 
         if not os.path.isdir(model_base_dir):
@@ -419,7 +433,7 @@ class ROSBoardNode(object):
             type=parse_epoch_type,
             help="Epoch for checkpoint loading. Can be one of ['best', 'latest', <int>].",
         )
-        parser.add_argument("-v", "--version", action=PrintVersion)
+        #parser.add_argument("-v", "--version", action=PrintVersion)
         return parser
 
 
@@ -460,9 +474,6 @@ class ROSBoardNode(object):
         parser.add_argument("--no-df-stage", action="store_true")
         args = parser.parse_args()
         main_dfnet(args)
-
-
-    
 
     ########################################################################
     
