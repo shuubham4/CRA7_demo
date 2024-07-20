@@ -416,7 +416,7 @@ class ROSBoardNode(object):
         return parser
 
 
-    def run():
+    def run(path):
         parser = setup_df_argument_parser()
         parser.add_argument(
             "--no-delay-compensation",
@@ -431,12 +431,12 @@ class ROSBoardNode(object):
             default=None,
             help="Attenuation limit in dB by mixing the enhanced signal with the noisy signal.",
         )
-        parser.add_argument(
-            "noisy_audio_files",
-            type=str,
-            nargs="*",
-            help="List of noise files to mix with the clean speech file.",
-        )
+        #parser.add_argument(
+        #    "noisy_audio_files",
+        #    type=str,
+        #    nargs="*",
+        #    help="List of noise files to mix with the clean speech file.",
+        #)
         parser.add_argument(
             "--noisy-dir",
             "-i",
@@ -452,7 +452,7 @@ class ROSBoardNode(object):
         )
         parser.add_argument("--no-df-stage", action="store_true")
         args = parser.parse_args()
-        audio = main_dfnet(args)
+        audio = main_dfnet(args, path)
         return audio
 
     ########################################################################
