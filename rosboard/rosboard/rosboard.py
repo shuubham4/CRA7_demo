@@ -182,7 +182,7 @@ class ROSBoardNode(object):
                 self.audio_input = False
 
     def process_audio(self, path):
-        audio, sample_rate = torchaudio.load(path)
+        #audio, sample_rate = torchaudio.load(path)
         resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
         audio = resampler(audio)
         # replace audio with enhanced audio here.
@@ -197,7 +197,7 @@ class ROSBoardNode(object):
 
     # integrating code for DFNet 3 #############
 
-    def main_dfnet(args):
+    def main_dfnet(args, path):
 
         from torch.utils.data import DataLoader, Dataset
 
@@ -233,7 +233,8 @@ class ROSBoardNode(object):
         elif not os.path.isdir(args.output_dir):
             os.mkdir(args.output_dir)
         df_sr = ModelParams().sr
-        input_files = args.noisy_audio_files
+        #input_files = args.noisy_audio_files
+        input_files = path
         ds = AudioDataset(input_files, df_sr)
         loader = DataLoader(ds, num_workers=2, pin_memory=True)
         n_samples = len(ds)
