@@ -199,6 +199,8 @@ class ROSBoardNode(object):
 
     def main_dfnet(args):
 
+        from torch.utils.data import DataLoader, Dataset
+
         class AudioDataset(Dataset):
             def __init__(self, files: List[str], sr: int) -> None:
                 super().__init__()
