@@ -181,18 +181,31 @@ class ROSBoardNode(object):
                 self.input_pub.publish(transcription)
                 self.audio_input = False
 
+    #def process_audio(self, path):
+    #    audio, sample_rate = torchaudio.load(path)
+    #    resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
+    #    audio = resampler(audio)
+    #    # replace audio with enhanced audio here.
+    #    resampled_audio = np.array(audio)
+    #    input_features = self.feature_extractor(resampled_audio, sampling_rate=16000, return_tensors="pt").input_features
+    #    generated_ids = self.model.generate(inputs=input_features,no_repeat_ngram_size=4, language="English")
+    #    transcription = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+    #    transcription = transcription.translate(str.maketrans('', '', string.punctuation))
+    #    transcription = transcription.lower()
+    #    return transcription[1:]
+
+    # commented original process_audio, rewrote process_audio with enhancement integrated. 
+
     def process_audio(self, path):
-        #audio, sample_rate = torchaudio.load(path)
+        enhanced_audio = run(path)
         resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
-        audio = resampler(audio)
-        # replace audio with enhanced audio here.
-        resampled_audio = np.array(audio)
+        enhanced_audio = resampler(enhanced_audio)
+        resampled_audio = np.array(enhanced_audio)
         input_features = self.feature_extractor(resampled_audio, sampling_rate=16000, return_tensors="pt").input_features
         generated_ids = self.model.generate(inputs=input_features,no_repeat_ngram_size=4, language="English")
         transcription = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
         transcription = transcription.translate(str.maketrans('', '', string.punctuation))
         transcription = transcription.lower()
-
         return transcription[1:]
 
     # integrating code for DFNet 3 #############
