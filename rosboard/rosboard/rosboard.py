@@ -233,14 +233,6 @@ class ROSBoardNode(object):
         elif not os.path.isdir(args.output_dir):
             os.mkdir(args.output_dir)
         df_sr = ModelParams().sr
-        #if args.noisy_dir is not None:
-        #    if len(args.noisy_audio_files) > 0:
-        #        logger.error("Only one of `noisy_audio_files` or `noisy_dir` arguments are supported.")
-        #        exit(1)
-        #    input_files = glob.glob(args.noisy_dir + "/*")
-        #else:
-        #    assert len(args.noisy_audio_files) > 0, "No audio files provided"
-        #    input_files = args.noisy_audio_files
         input_files = args.noisy_audio_files
         ds = AudioDataset(input_files, df_sr)
         loader = DataLoader(ds, num_workers=2, pin_memory=True)
@@ -420,7 +412,6 @@ class ROSBoardNode(object):
             type=parse_epoch_type,
             help="Epoch for checkpoint loading. Can be one of ['best', 'latest', <int>].",
         )
-        #parser.add_argument("-v", "--version", action=PrintVersion)
         return parser
 
 
@@ -460,7 +451,8 @@ class ROSBoardNode(object):
         )
         parser.add_argument("--no-df-stage", action="store_true")
         args = parser.parse_args()
-        main_dfnet(args)
+        audio = main_dfnet(args)
+        return audio
 
     ########################################################################
     
