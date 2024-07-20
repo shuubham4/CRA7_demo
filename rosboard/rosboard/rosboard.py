@@ -261,7 +261,8 @@ class ROSBoardNode(object):
             p_str = f"{progress:2.0f}% | " if n_samples > 1 else ""
             logger.info(f"{p_str}Enhanced noisy audio file '{fn}' in {t:.2f}s (RT factor: {rtf:.3f})")
             audio = resample(audio.to("cpu"), df_sr, audio_sr)
-            save_audio(file, audio, sr=audio_sr, output_dir=args.output_dir, suffix=suffix, log=False)
+            #save_audio(file, audio, sr=audio_sr, output_dir=args.output_dir, suffix=suffix, log=False)
+            return audio
     
     
     def init_df(
