@@ -195,24 +195,7 @@ class ROSBoardNode(object):
 
         return transcription[1:]
 
-    # integrating code for DFNet 3 ############################################
-
-    #def AudioDataset(self, files: List[str], sr: int):
-    #    self.files = []
-    #    for file in files:
-    #        if not os.path.isfile(file):
-    #            logger.warning(f"File not found: {file}. Skipping...")
-    #        self.files.append(file)
-    #    self.sr = sr
-
-    #def __getitem__(self, index) -> Tuple[str, Tensor, int]:
-    #    fn = self.files[index]
-    #    audio, meta = load_audio(fn, self.sr, "cpu")
-    #    return fn, audio, meta.sample_rate
-
-    #def __len__(self):
-    #    return len(self.files)    
-    
+    # integrating code for DFNet 3 #############
 
     def main_dfnet(args):
 
