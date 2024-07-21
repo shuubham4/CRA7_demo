@@ -177,26 +177,29 @@ class ROSBoardNode(object):
             if self.audio_input:
                 # time.sleep(1)
                 path = os.path.join(pathlib.Path(__file__).resolve().parents[1], "audiooutput.wav")
-                transcription = self.process_audio(path)
+                #if slider button on:
+                    transcription = self.process_audio_with_enhancement(path)
+                #else:
+                    transcription = self.process_audio_without_enhancement(path)
                 self.input_pub.publish(transcription)
                 self.audio_input = False
 
-    #def process_audio(self, path):
-    #    audio, sample_rate = torchaudio.load(path)
-    #    resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
-    #    audio = resampler(audio)
-    #    # replace audio with enhanced audio here.
-    #    resampled_audio = np.array(audio)
-    #    input_features = self.feature_extractor(resampled_audio, sampling_rate=16000, return_tensors="pt").input_features
-    #    generated_ids = self.model.generate(inputs=input_features,no_repeat_ngram_size=4, language="English")
-    #    transcription = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
-    #    transcription = transcription.translate(str.maketrans('', '', string.punctuation))
-    #    transcription = transcription.lower()
-    #    return transcription[1:]
+    def process_audio_without_enhancement(self, path):
+        audio, sample_rate = torchaudio.load(path)
+        resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
+        audio = resampler(audio)
+        # replace audio with enhanced audio here.
+        resampled_audio = np.array(audio)
+        input_features = self.feature_extractor(resampled_audio, sampling_rate=16000, return_tensors="pt").input_features
+        generated_ids = self.model.generate(inputs=input_features,no_repeat_ngram_size=4, language="English")
+        transcription = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        transcription = transcription.translate(str.maketrans('', '', string.punctuation))
+        transcription = transcription.lower()
+        return transcription[1:]
 
-    # commented original process_audio, rewrote process_audio with enhancement integrated. 
+    # rewrote process_audio with enhancement integrated. 
 
-    def process_audio(self, path):
+    def process_audio_with_enhancement(self, path):
         enhanced_audio = run(path)
         resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
         enhanced_audio = resampler(enhanced_audio)
